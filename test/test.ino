@@ -8,7 +8,7 @@
   #include <avr/power.h>
 #endif
 
-#define PIN 6
+#define PIN 17
 
 #define N 60
 
