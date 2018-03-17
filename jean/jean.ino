@@ -12,7 +12,7 @@
 
 #define N 60
 
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(60, PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(N, PIN, NEO_GRB + NEO_KHZ800);
 
 Adafruit_LIS3DH lis = Adafruit_LIS3DH();
 
