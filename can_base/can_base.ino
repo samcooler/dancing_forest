@@ -26,36 +26,36 @@ void setup() {
 
 void loop() {
   
-  if (CAN_MSGAVAIL == CAN.checkReceive())           // check if data coming
+  if (CAN_MSGAVAIL != CAN.checkReceive())           // check if data coming
   {
-    rcvTime = millis();
-    CAN.readMsgBuf(&len, buf);    // read data,  len: data length, buf: data buf
-
-    rxId = CAN.getCanId();
-
-    Serial.print(rcvTime);
-    Serial.print("\t\t");
-    Serial.print("0x");
-    Serial.print(rxId, HEX);
-    Serial.print("\t");
-
-    for (int i = 0; i < len; i++) // print the data
-    {
-      if (buf[i] > 15) {
-        Serial.print("0x");
-        Serial.print(buf[i], HEX);
-      }
-      else {
-        Serial.print("0x0");
-        Serial.print(buf[i], HEX);
-      }
-
-      //Serial.print("0x");
-      //Serial.print(buf[i], HEX);
-
-      Serial.print("\t");
-    }
-    Serial.println();
+    return;
   }
+  rcvTime = millis();
+  CAN.readMsgBuf(&len, buf);    // read data,  len: data length, buf: data buf
+
+  rxId = CAN.getCanId();
+
+  Serial.print(rcvTime);
+  Serial.print("\t\t");
+  Serial.print("from: ");
+  Serial.print(rxId, HEX);
+  Serial.print("\t");
+
+  Serial.print("Rx: Node ");
+  Serial.print(rxId - 1);
+  Serial.print(" | accel ");
+  Serial.print(buf[0]);
+  Serial.print(" ");
+  Serial.print(buf[1]);
+  Serial.print(" ");
+  Serial.print(buf[2]);
+  
+  Serial.println();
+
+//  canMessage[0] = xValue;
+//  canMessage[1] = yValue;
+//  canMessage[2] = zValue;
+//
+//  CAN.sendMsgBuf(address, 0, sizeof(canMessage), canMessage);
 
 }

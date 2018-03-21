@@ -6,7 +6,7 @@
 #include <Adafruit_Sensor.h>
 
 // CAN setup
-uint8_t canMessage[5] = {0, 0, 0, 0, 0};
+uint8_t canMessage[3] = {0, 0, 0};
 const int SPI_CS_PIN = 10;
 MCP_CAN CAN(SPI_CS_PIN);
 
@@ -36,7 +36,7 @@ void setup()
 
   // address init
   pinMode(PIN_address, INPUT);
-  address = digitalRead(PIN_address);
+  address = digitalRead(PIN_address) + 1; // base has the first address 0x00
   canMessage[1] = address;
   
   // CAN init
@@ -79,12 +79,12 @@ void loop()
   }
   strip.show();
   
-  canMessage[2] = xValue;
-  canMessage[3] = yValue;
-  canMessage[4] = zValue;
+  canMessage[0] = xValue;
+  canMessage[1] = yValue;
+  canMessage[2] = zValue;
 
-  CAN.sendMsgBuf(0x00, 0, 8, canMessage);
-  delay(100);
-
+  CAN.sendMsgBuf(address, 0, sizeof(canMessage), canMessage);
+//  delay(100);
+  Serial.println("sent");
 
 }
