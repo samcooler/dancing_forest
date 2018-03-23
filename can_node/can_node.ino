@@ -5,8 +5,15 @@
 #include <Adafruit_LIS3DH.h>
 #include <Adafruit_Sensor.h>
 
+// program setup
+char state = 'r';
+
 // CAN setup
-uint8_t canMessage[3] = {0, 0, 0};
+#define extendedMode 0
+uint8_t canMessage[5] = {0, 0, 0, 0, 0};
+uint8_t incomingMessageLength = 0;
+uint8_t incomingMessageBuffer[8];
+uint8_t dataFromBase[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 const int SPI_CS_PIN = 10;
 MCP_CAN CAN(SPI_CS_PIN);
 
@@ -14,7 +21,7 @@ MCP_CAN CAN(SPI_CS_PIN);
 #ifdef __AVR__
 #include <avr/power.h>
 #endif
-#define PIN_LED       6
+#define PIN_LED       17 // 6 for metro mini, 17 for teensy-LC
 #define NUMPIXELS      1
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUMPIXELS, PIN_LED, NEO_GRB + NEO_KHZ800);
 
@@ -34,11 +41,14 @@ void setup()
 
   Serial.println("Node start");
 
+
   // address init
   pinMode(PIN_address, INPUT);
   address = digitalRead(PIN_address) + 1; // base has the first address 0x00
-  canMessage[1] = address;
-  
+
+  Serial.print("Node Id: ");
+  Serial.println(address);
+
   // CAN init
   Serial.println("CAN init start");
   if (CAN.begin(CAN_250KBPS) == CAN_OK)
@@ -61,30 +71,91 @@ void setup()
   lis.setRange(LIS3DH_RANGE_4_G);
 }
 
+
+
+
 void loop()
 {
-  // read accelerometer
+  // Receive data from base
+  if (CAN_MSGAVAIL == CAN.checkReceive())
+  {
+    Serial.println("got message");
+    CAN.readMsgBuf(&incomingMessageLength, incomingMessageBuffer);
+    uint32_t fromAddress = CAN.getCanId();
+    // if it's not a message for us, ignore it
+    Serial.println(fromAddress);
+    if (fromAddress == address)
+    {
 
-  sensors_event_t event;
-  lis.getEvent(&event);
+      // for now, just stay in "run" mode
+      Serial.print("Rx ");
+      Serial.print(incomingMessageLength);
+      Serial.print(": ");
+      for (uint8_t i = 0; i < incomingMessageLength; i++) {
+        Serial.print(incomingMessageBuffer[i]);
+        Serial.print(" ");
+      }
+      Serial.println();
 
-  float scale = 20;
-  float baseline = 1;
-  uint8_t xValue = baseline + scale * abs(event.acceleration.x);
-  uint8_t yValue = baseline + scale * abs(event.acceleration.y);
-  uint8_t zValue = baseline + scale * abs(event.acceleration.z - 9.8);
+      switch (incomingMessageBuffer[0])
+      {
+        case 2:
+          Serial.println("Got message from base");
+          state = 'r';
+          for (uint8_t i = 1; i < incomingMessageLength; i++) {
+            dataFromBase[i - 1] = incomingMessageBuffer[i];
+          }
+      }
+    }
 
-  for(uint16_t i=0; i<strip.numPixels(); i++) {
-    strip.setPixelColor(i, strip.Color(xValue, yValue, zValue));
   }
-  strip.show();
-  
-  canMessage[0] = xValue;
-  canMessage[1] = yValue;
-  canMessage[2] = zValue;
 
-  CAN.sendMsgBuf(address, 0, sizeof(canMessage), canMessage);
-//  delay(100);
-  Serial.println("sent");
 
+  switch (state)
+  {
+    case 'r':
+      //Serial.println("State: run");
+      // read accelerometer
+      sensors_event_t event;
+      lis.getEvent(&event);
+
+
+      // setup data to send to base
+      float scale = 20;
+      float baseline = 128;
+      canMessage[1] = baseline + scale * event.acceleration.x;
+      canMessage[2] = baseline + scale * event.acceleration.y;
+      canMessage[3] = baseline + scale * (event.acceleration.z - 9.8);
+
+      /*
+        message format:
+        messageType, [data]
+
+        messageType: 0 "announce presence, wait for setup"
+        messageType: 1 "sensor data"
+        data: {x, y, z} from accelerometer
+        messageType: 2 "feedback data"
+        data: {h, l, s} or arbitrary numerical values
+      */
+
+      canMessage[0] = 1; // sensor data
+      CAN.sendMsgBuf(address, extendedMode, sizeof(canMessage), canMessage);
+
+
+
+      // display code here:
+      scale = 10;
+      baseline = 1;
+      uint8_t xValue = dataFromBase[0] / 10;// + baseline + scale * abs(event.acceleration.x);
+      uint8_t yValue = dataFromBase[1] / 10;// + baseline + scale * abs(event.acceleration.y);
+      uint8_t zValue = dataFromBase[2] / 10;// + baseline + scale * abs(event.acceleration.z - 9.8);
+
+      for (uint16_t i = 0; i < strip.numPixels(); i++) {
+        strip.setPixelColor(i, strip.Color(xValue, yValue, zValue));
+      }
+      strip.show();
+      // END CASE 'r'
+  }
+
+  delay(300);
 }
