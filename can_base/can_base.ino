@@ -6,7 +6,7 @@ const int SPI_CS_PIN = 10;
 MCP_CAN CAN(SPI_CS_PIN);
 uint8_t incomingMessageLength = 0;
 uint8_t incomingMessageBuffer[8];
-uint8_t canMessage[4] = {0, 0, 0, 0};
+uint8_t canMessage[5] = {0, 0, 0, 0, 0};
 
 uint8_t nodeData[2][3] = {{0, 0, 0}, {0, 0, 0}};
 
@@ -55,13 +55,14 @@ void loop() {
 
   // get a message ready to send to the other node
   uint8_t otherNode = (nodeId + 1) % 2;
-  canMessage[0] = 2; // feedback data from base
-  canMessage[1] = nodeData[otherNode][0];
-  canMessage[2] = nodeData[otherNode][1];
-  canMessage[3] = nodeData[otherNode][2];
+  canMessage[0] = nodeId; // destination node ID
+  canMessage[1] = 2; // feedback data from base
+  canMessage[2] = nodeData[nodeId][0];
+  canMessage[3] = nodeData[nodeId][1];
+  canMessage[4] = nodeData[nodeId][2];
 
 
-  CAN.sendMsgBuf(otherNode + 1, 0, sizeof(canMessage), canMessage);
+  CAN.sendMsgBuf(0, 0, sizeof(canMessage), canMessage);
   Serial.print("Tx: Base to Node ");
   Serial.print(otherNode);
   Serial.print(" | msg ");
@@ -72,5 +73,7 @@ void loop() {
   Serial.print(canMessage[2]);
   Serial.print(" ");
   Serial.print(canMessage[3]);  
+  Serial.print(" ");
+  Serial.print(canMessage[4]);    
   Serial.println();
 }
