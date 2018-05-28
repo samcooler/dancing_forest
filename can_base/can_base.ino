@@ -34,46 +34,60 @@ void loop() {
   CAN.readMsgBuf(&incomingMessageLength, incomingMessageBuffer);    // read data,  len: data length, buf: data buf
 
   rxId = CAN.getCanId();
-
-  Serial.print("Rx: Node ");
-  uint8_t nodeId = rxId - 1;
-  Serial.print(nodeId);
-  Serial.print(" | accel ");
-  Serial.print(incomingMessageBuffer[0]);
-  Serial.print(" ");
-  Serial.print(incomingMessageBuffer[1]);
-  Serial.print(" ");
-  Serial.print(incomingMessageBuffer[2]);
-  Serial.print(" ");
-  Serial.print(incomingMessageBuffer[3]);
+  Serial.print(rxId);
+  Serial.print(' ');
+  
+  for (int i = 0; i < incomingMessageLength; i++) // print the data
+  {
+    Serial.print(incomingMessageBuffer[i], HEX);
+    Serial.print(' ');
+  }
   Serial.println();
 
-  // incomingMessageBuffer[0] is message type
-  nodeData[nodeId][0] = incomingMessageBuffer[1];
-  nodeData[nodeId][1] = incomingMessageBuffer[2];
-  nodeData[nodeId][2] = incomingMessageBuffer[3];
-
-  // get a message ready to send to the other node
-  uint8_t otherNode = (nodeId + 1) % 2;
-  canMessage[0] = nodeId; // destination node ID
-  canMessage[1] = 2; // feedback data from base
-  canMessage[2] = nodeData[nodeId][0];
-  canMessage[3] = nodeData[nodeId][1];
-  canMessage[4] = nodeData[nodeId][2];
 
 
-  CAN.sendMsgBuf(0, 0, sizeof(canMessage), canMessage);
-  Serial.print("Tx: Base to Node ");
-  Serial.print(otherNode);
-  Serial.print(" | msg ");
-  Serial.print(canMessage[0]);
-  Serial.print(" ");
-  Serial.print(canMessage[1]);
-  Serial.print(" ");
-  Serial.print(canMessage[2]);
-  Serial.print(" ");
-  Serial.print(canMessage[3]);  
-  Serial.print(" ");
-  Serial.print(canMessage[4]);    
-  Serial.println();
+  //
+  //  rxId = CAN.getCanId();
+  //
+  //  Serial.print("Rx: Node ");
+  //  uint8_t nodeId = rxId - 1;
+  //  Serial.print(nodeId);
+  //  Serial.print(" | accel ");
+  //  Serial.print(incomingMessageBuffer[0]);
+  //  Serial.print(" ");
+  //  Serial.print(incomingMessageBuffer[1]);
+  //  Serial.print(" ");
+  //  Serial.print(incomingMessageBuffer[2]);
+  //  Serial.print(" ");
+  //  Serial.print(incomingMessageBuffer[3]);
+  //  Serial.println();
+  //
+  //  // incomingMessageBuffer[0] is message type
+  //  nodeData[nodeId][0] = incomingMessageBuffer[1];
+  //  nodeData[nodeId][1] = incomingMessageBuffer[2];
+  //  nodeData[nodeId][2] = incomingMessageBuffer[3];
+  //
+  //  // get a message ready to send to the other node
+  //  uint8_t otherNode = (nodeId + 1) % 2;
+  //  canMessage[0] = nodeId; // destination node ID
+  //  canMessage[1] = 2; // feedback data from base
+  //  canMessage[2] = nodeData[nodeId][0];
+  //  canMessage[3] = nodeData[nodeId][1];
+  //  canMessage[4] = nodeData[nodeId][2];
+  //
+  //
+  //  CAN.sendMsgBuf(0, 0, sizeof(canMessage), canMessage);
+  //  Serial.print("Tx: Base to Node ");
+  //  Serial.print(otherNode);
+  //  Serial.print(" | msg ");
+  //  Serial.print(canMessage[0]);
+  //  Serial.print(" ");
+  //  Serial.print(canMessage[1]);
+  //  Serial.print(" ");
+  //  Serial.print(canMessage[2]);
+  //  Serial.print(" ");
+  //  Serial.print(canMessage[3]);
+  //  Serial.print(" ");
+  //  Serial.print(canMessage[4]);
+  //  Serial.println();
 }
