@@ -12,7 +12,7 @@ uint8_t nodeData[2][3] = {{0, 0, 0}, {0, 0, 0}};
 
 void setup() {
   delay(1000);
-  Serial.begin(115200);
+//  Serial.begin(115200);
 
   Serial.println("Base start");
 
